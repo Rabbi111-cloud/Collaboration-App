@@ -1,10 +1,10 @@
 "use client"
 
 import { useState } from "react"
-import { auth } from "../../lib/firebase"
+import { getAuthClient } from "../../lib/firebase"
 import {
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword
 } from "firebase/auth"
 import { useRouter } from "next/navigation"
 
@@ -14,11 +14,13 @@ export default function Login() {
   const router = useRouter()
 
   async function handleLogin() {
+    const auth = await getAuthClient()
     await signInWithEmailAndPassword(auth, email, password)
     router.push("/dashboard")
   }
 
   async function handleSignup() {
+    const auth = await getAuthClient()
     await createUserWithEmailAndPassword(auth, email, password)
     router.push("/dashboard")
   }
@@ -26,12 +28,24 @@ export default function Login() {
   return (
     <div style={{ padding: 40 }}>
       <h2>Login / Signup</h2>
-      <input placeholder="Email" onChange={e => setEmail(e.target.value)} />
+
+      <input
+        placeholder="Email"
+        onChange={e => setEmail(e.target.value)}
+      />
       <br /><br />
-      <input type="password" placeholder="Password" onChange={e => setPassword(e.target.value)} />
+
+      <input
+        type="password"
+        placeholder="Password"
+        onChange={e => setPassword(e.target.value)}
+      />
       <br /><br />
+
       <button onClick={handleLogin}>Login</button>
-      <button onClick={handleSignup} style={{ marginLeft: 10 }}>Signup</button>
+      <button onClick={handleSignup} style={{ marginLeft: 10 }}>
+        Signup
+      </button>
     </div>
   )
 }
