@@ -11,14 +11,18 @@ export default function LoginClient() {
 
   async function handleLogin() {
     const auth = await getAuthClient()
-    const { signInWithEmailAndPassword } = await import("firebase/auth")
+    const { signInWithEmailAndPassword } = await import(
+      "firebase/auth/browser"
+    )
     await signInWithEmailAndPassword(auth, email, password)
     router.push("/dashboard")
   }
 
   async function handleSignup() {
     const auth = await getAuthClient()
-    const { createUserWithEmailAndPassword } = await import("firebase/auth")
+    const { createUserWithEmailAndPassword } = await import(
+      "firebase/auth/browser"
+    )
     await createUserWithEmailAndPassword(auth, email, password)
     router.push("/dashboard")
   }
