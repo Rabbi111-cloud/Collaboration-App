@@ -1,12 +1,8 @@
 "use client"
 
 import { useState } from "react"
-import { getAuthClient } from "../../lib/firebase"
-import {
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword
-} from "firebase/auth"
 import { useRouter } from "next/navigation"
+import { getAuthClient } from "../../lib/firebase"
 
 export default function Login() {
   const [email, setEmail] = useState("")
@@ -15,12 +11,18 @@ export default function Login() {
 
   async function handleLogin() {
     const auth = await getAuthClient()
+
+    const { signInWithEmailAndPassword } = await import("firebase/auth")
+
     await signInWithEmailAndPassword(auth, email, password)
     router.push("/dashboard")
   }
 
   async function handleSignup() {
     const auth = await getAuthClient()
+
+    const { createUserWithEmailAndPassword } = await import("firebase/auth")
+
     await createUserWithEmailAndPassword(auth, email, password)
     router.push("/dashboard")
   }
@@ -31,14 +33,14 @@ export default function Login() {
 
       <input
         placeholder="Email"
-        onChange={e => setEmail(e.target.value)}
+        onChange={(e) => setEmail(e.target.value)}
       />
       <br /><br />
 
       <input
         type="password"
         placeholder="Password"
-        onChange={e => setPassword(e.target.value)}
+        onChange={(e) => setPassword(e.target.value)}
       />
       <br /><br />
 
