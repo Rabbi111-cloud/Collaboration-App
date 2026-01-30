@@ -1,179 +1,214 @@
 import { useRouter } from "next/router"
 import { useEffect, useState } from "react"
-import { auth, db } from "../../lib/firebase"
 import {
   collection,
+  doc,
   addDoc,
-  query,
-  where,
   onSnapshot,
+  query,
   orderBy,
   updateDoc,
-  doc,
+  deleteDoc
 } from "firebase/firestore"
+import { auth, db } from "../../lib/firebase"
+import { onAuthStateChanged } from "firebase/auth"
 
-/* =========================
-   MAIN BOARD PAGE
-========================= */
 export default function BoardPage() {
   const router = useRouter()
-  const { id: boardId } = router.query
+  const { id } = router.query
+
+  const [user, setUser] = useState(null)
   const [columns, setColumns] = useState([])
   const [newColumn, setNewColumn] = useState("")
+  const [dragTask, setDragTask] = useState(null)
 
+  // 🔐 Auth guard
   useEffect(() => {
-    if (!boardId) return
+    const unsub = onAuthStateChanged(auth, u => {
+      if (!u) router.push("/login")
+      else setUser(u)
+    })
+    return () => unsub()
+  }, [])
+
+  // 📡 Load columns
+  useEffect(() => {
+    if (!id) return
 
     const q = query(
-      collection(db, "columns"),
-      where("boardId", "==", boardId),
+      collection(db, "boards", id, "columns"),
       orderBy("order")
     )
 
-    const unsub = onSnapshot(q, (snap) => {
-      setColumns(snap.docs.map(d => ({ id: d.id, ...d.data() })))
+    const unsub = onSnapshot(q, snap => {
+      const cols = snap.docs.map(d => ({
+        id: d.id,
+        ...d.data(),
+        tasks: []
+      }))
+      setColumns(cols)
     })
 
     return () => unsub()
-  }, [boardId])
+  }, [id])
 
+  // 📡 Load tasks per column
+  useEffect(() => {
+    if (!id || columns.length === 0) return
+
+    const unsubs = columns.map(col =>
+      onSnapshot(
+        query(
+          collection(db, "boards", id, "columns", col.id, "tasks"),
+          orderBy("order")
+        ),
+        snap => {
+          setColumns(prev =>
+            prev.map(c =>
+              c.id === col.id
+                ? { ...c, tasks: snap.docs.map(t => ({ id: t.id, ...t.data() })) }
+                : c
+            )
+          )
+        }
+      )
+    )
+
+    return () => unsubs.forEach(u => u())
+  }, [id, columns.length])
+
+  // ➕ Add column
   const addColumn = async () => {
-    if (!newColumn) return
+    if (!newColumn.trim()) return
 
-    await addDoc(collection(db, "columns"), {
-      boardId,
-      name: newColumn,
-      order: Date.now(),
+    await addDoc(collection(db, "boards", id, "columns"), {
+      title: newColumn,
+      order: columns.length
     })
 
     setNewColumn("")
   }
 
-  return (
-    <div style={{ padding: 20 }}>
-      <h1>Board</h1>
+  // ➕ Add task
+  const addTask = async (columnId) => {
+    const title = prompt("Task title")
+    if (!title) return
 
-      <div style={{ marginBottom: 20 }}>
-        <input
-          placeholder="New column name"
-          value={newColumn}
-          onChange={e => setNewColumn(e.target.value)}
-        />
-        <button onClick={addColumn}>Add Column</button>
-      </div>
+    await addDoc(
+      collection(db, "boards", id, "columns", columnId, "tasks"),
+      {
+        title,
+        order: Date.now()
+      }
+    )
+  }
 
-      <div style={{ display: "flex", gap: 20, overflowX: "auto" }}>
-        {columns.map(col => (
-          <Column key={col.id} column={col} />
-        ))}
-      </div>
+  // 🧲 Drag logic (SAFE)
+  const onDrop = async (columnId) => {
+    if (!dragTask) return
 
-      <Invite boardId={boardId} />
-    </div>
-  )
-}
-
-/* =========================
-   COLUMN + TASKS
-========================= */
-function Column({ column }) {
-  const [tasks, setTasks] = useState([])
-  const [newTask, setNewTask] = useState("")
-
-  useEffect(() => {
-    const q = query(
-      collection(db, "tasks"),
-      where("columnId", "==", column.id),
-      orderBy("createdAt")
+    await updateDoc(
+      doc(db, "boards", id, "columns", dragTask.columnId, "tasks", dragTask.id),
+      { columnId }
     )
 
-    const unsub = onSnapshot(q, (snap) => {
-      setTasks(snap.docs.map(d => ({ id: d.id, ...d.data() })))
-    })
-
-    return () => unsub()
-  }, [column.id])
-
-  const addTask = async () => {
-    if (!newTask) return
-
-    await addDoc(collection(db, "tasks"), {
-      title: newTask,
-      columnId: column.id,
-      boardId: column.boardId,
-      createdAt: Date.now(),
-    })
-
-    setNewTask("")
+    setDragTask(null)
   }
 
   return (
-    <div
-      style={{
-        minWidth: 250,
-        background: "#f4f5f7",
-        padding: 10,
-        borderRadius: 6,
-      }}
-    >
-      <h3>{column.name}</h3>
+    <div style={styles.page}>
+      <div style={styles.header}>
+        <button onClick={() => router.push("/dashboard")}>⬅ Back</button>
+        <h2>Board</h2>
+      </div>
 
-      {tasks.map(task => (
-        <div
-          key={task.id}
-          style={{
-            background: "#fff",
-            padding: 8,
-            marginBottom: 6,
-            borderRadius: 4,
-          }}
-        >
-          {task.title}
+      <div style={styles.columns}>
+        {columns.map(col => (
+          <div
+            key={col.id}
+            style={styles.column}
+            onDragOver={e => e.preventDefault()}
+            onDrop={() => onDrop(col.id)}
+          >
+            <h4>{col.title}</h4>
+
+            {col.tasks.map(task => (
+              <div
+                key={task.id}
+                style={styles.task}
+                draggable
+                onDragStart={() =>
+                  setDragTask({ ...task, columnId: col.id })
+                }
+              >
+                {task.title}
+              </div>
+            ))}
+
+            <button style={styles.addTask} onClick={() => addTask(col.id)}>
+              + Add Task
+            </button>
+          </div>
+        ))}
+
+        {/* Add column */}
+        <div style={styles.addColumn}>
+          <input
+            placeholder="New column"
+            value={newColumn}
+            onChange={e => setNewColumn(e.target.value)}
+          />
+          <button onClick={addColumn}>Add</button>
         </div>
-      ))}
-
-      <input
-        placeholder="New task"
-        value={newTask}
-        onChange={e => setNewTask(e.target.value)}
-      />
-      <button onClick={addTask}>Add</button>
+      </div>
     </div>
   )
 }
 
-/* =========================
-   SIMPLE INVITE SYSTEM
-========================= */
-function Invite({ boardId }) {
-  const [email, setEmail] = useState("")
-  const [status, setStatus] = useState("")
-
-  const inviteUser = async () => {
-    if (!email || !boardId) return
-
-    const boardRef = doc(db, "boards", boardId)
-
-    await updateDoc(boardRef, {
-      members: [...new Set([auth.currentUser.email, email])],
-    })
-
-    setStatus("User added to board")
-    setEmail("")
+const styles = {
+  page: {
+    padding: "15px",
+    minHeight: "100vh",
+    background: "#eceff1"
+  },
+  header: {
+    display: "flex",
+    alignItems: "center",
+    gap: "10px",
+    marginBottom: "15px"
+  },
+  columns: {
+    display: "flex",
+    gap: "15px",
+    overflowX: "auto"
+  },
+  column: {
+    minWidth: "250px",
+    background: "#fff",
+    padding: "10px",
+    borderRadius: "10px"
+  },
+  task: {
+    background: "#e3f2fd",
+    padding: "8px",
+    borderRadius: "6px",
+    marginBottom: "6px",
+    cursor: "grab"
+  },
+  addTask: {
+    marginTop: "5px",
+    background: "transparent",
+    border: "none",
+    color: "#0070f3",
+    cursor: "pointer"
+  },
+  addColumn: {
+    minWidth: "200px",
+    background: "#fff",
+    padding: "10px",
+    borderRadius: "10px",
+    display: "flex",
+    flexDirection: "column",
+    gap: "5px"
   }
-
-  return (
-    <div style={{ marginTop: 40 }}>
-      <h3>Invite collaborator</h3>
-
-      <input
-        placeholder="User email"
-        value={email}
-        onChange={e => setEmail(e.target.value)}
-      />
-      <button onClick={inviteUser}>Invite</button>
-
-      {status && <p>{status}</p>}
-    </div>
-  )
 }
