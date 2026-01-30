@@ -1,0 +1,21 @@
+.dashboard {
+  padding: 20px;
+}
+
+.board-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.board-card {
+  background: white;
+  padding: 18px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: transform .15s;
+}
+
+.board-card:hover {
+  transform: translateY(-4px);
+}
