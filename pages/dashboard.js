@@ -20,7 +20,7 @@ export default function Dashboard() {
   const [showNewBoard, setShowNewBoard] = useState(false)
   const [title, setTitle] = useState("")
 
-  // 🔐 Auth check
+  // 🔐 Auth guard
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (u) => {
       if (!u) {
@@ -33,7 +33,7 @@ export default function Dashboard() {
     return () => unsub()
   }, [])
 
-  // 📡 Realtime boards
+  // 📡 Realtime boards listener
   useEffect(() => {
     if (!user) return
 
@@ -53,18 +53,30 @@ export default function Dashboard() {
     return () => unsub()
   }, [user])
 
-  // ➕ Create board
+  // ➕ Create board (UPDATED)
   const createBoard = async () => {
-    if (!title.trim()) return alert("Enter board title")
+    if (!user) {
+      alert("You are not authenticated")
+      return
+    }
 
-    await addDoc(collection(db, "boards"), {
-      title,
-      owner: user.uid,
-      createdAt: serverTimestamp()
-    })
+    if (!title.trim()) {
+      alert("Enter board title")
+      return
+    }
 
-    setTitle("")
-    setShowNewBoard(false)
+    try {
+      await addDoc(collection(db, "boards"), {
+        title: title.trim(),
+        owner: user.uid,
+        createdAt: serverTimestamp()
+      })
+
+      setTitle("")
+      setShowNewBoard(false)
+    } catch (err) {
+      alert("Failed to create board: " + err.message)
+    }
   }
 
   const logout = async () => {
@@ -114,7 +126,7 @@ export default function Dashboard() {
         </button>
       )}
 
-      {/* Boards */}
+      {/* Boards grid */}
       <div style={styles.grid}>
         {boards.map(board => (
           <div
@@ -176,8 +188,7 @@ const styles = {
     padding: "20px",
     borderRadius: "10px",
     cursor: "pointer",
-    boxShadow: "0 2px 6px rgba(0,0,0,0.1)",
-    transition: "transform .1s",
+    boxShadow: "0 2px 6px rgba(0,0,0,0.1)"
   },
   loading: {
     minHeight: "100vh",
