@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/router"
 import { onAuthStateChanged } from "firebase/auth"
+import { theme } from "../../lib/theme"
 import {
   doc, collection, onSnapshot, addDoc, updateDoc, deleteDoc,
   query, orderBy, serverTimestamp, getDoc, setDoc
