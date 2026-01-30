@@ -3,8 +3,6 @@ import { useRouter } from "next/router"
 import { onAuthStateChanged, signOut } from "firebase/auth"
 import { collection, addDoc, query, where, onSnapshot, serverTimestamp } from "firebase/firestore"
 import { auth, db } from "../lib/firebase"
-import "../styles/global.css"
-import "../styles/dashboard.css"
 
 export default function Dashboard() {
   const router = useRouter()
