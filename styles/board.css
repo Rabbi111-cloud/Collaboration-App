@@ -1,0 +1,13 @@
+.column {
+  background: white;
+  padding: 12px;
+  border-radius: 12px;
+  width: 260px;
+}
+
+.task {
+  background: #e0f2fe;
+  padding: 8px;
+  border-radius: 8px;
+  margin-bottom: 6px;
+}
