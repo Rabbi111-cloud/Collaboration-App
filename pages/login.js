@@ -3,8 +3,6 @@ import { useRouter } from "next/router"
 import { auth, db } from "../lib/firebase"
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from "firebase/auth"
 import { setDoc, doc, serverTimestamp } from "firebase/firestore"
-import "../styles/global.css"
-import "../styles/auth.css"
 
 export default function Login() {
   const router = useRouter()
