@@ -77,8 +77,8 @@ export default function Dashboard() {
 const styles = {
   container: {
     minHeight: "100vh",
-    padding: "40px",
-    background: "#f5f5f5",
+    padding: 40,
+    background: theme.pageBg,
     fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif"
   },
   header: {
@@ -87,16 +87,18 @@ const styles = {
     alignItems: "center",
     marginBottom: 20
   },
-  title: { fontSize: 28, fontWeight: 600 },
+  title: { fontSize: 28, fontWeight: 600, color: theme.textPrimary },
   logout: {
     padding: "8px 16px",
     borderRadius: 6,
     border: "none",
-    background: "#ef4444",
+    background: theme.danger,
     color: "#fff",
     cursor: "pointer",
-    fontWeight: 500
+    fontWeight: 500,
+    transition: "all 0.2s",
   },
+  logoutHover: { filter: "brightness(0.9)" },
   newBoardContainer: {
     display: "flex",
     gap: 10,
@@ -105,7 +107,7 @@ const styles = {
   input: {
     padding: "8px 12px",
     borderRadius: 6,
-    border: "1px solid #ccc",
+    border: `1px solid ${theme.inputBorder}`,
     flex: 1,
     fontSize: 16
   },
@@ -113,19 +115,22 @@ const styles = {
     padding: "8px 16px",
     borderRadius: 6,
     border: "none",
-    background: "#2563eb",
+    background: theme.primary,
     color: "#fff",
-    cursor: "pointer"
+    cursor: "pointer",
+    fontWeight: 500,
+    transition: "all 0.2s"
   },
   addBoardBtn: {
     padding: "10px 20px",
     borderRadius: 6,
     border: "none",
-    background: "#2563eb",
+    background: theme.primary,
     color: "#fff",
     fontWeight: 500,
     cursor: "pointer",
-    marginBottom: 20
+    marginBottom: 20,
+    transition: "all 0.2s"
   },
   boardGrid: {
     display: "grid",
@@ -133,13 +138,14 @@ const styles = {
     gap: 20
   },
   boardCard: {
-    background: "#fff",
+    background: theme.cardBg,
     padding: 20,
     borderRadius: 8,
     cursor: "pointer",
     fontWeight: 500,
     fontSize: 16,
-    boxShadow: "0 4px 12px rgba(0,0,0,0.05)",
+    boxShadow: theme.shadow,
     transition: "all 0.2s",
-  }
+  },
+  boardCardHover: { transform: "translateY(-4px)", boxShadow: "0 8px 20px rgba(0,0,0,0.1)" }
 }
