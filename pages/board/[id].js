@@ -195,20 +195,20 @@ function TaskList({boardId,columnId}){
 }
 
 const styles = {
-  page: { padding: 20, fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif", background:"#f5f5f5" },
+  page: { padding: 20, fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif", background: theme.pageBg },
   header: { display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:20 },
   headerButtons: { display:"flex", gap:8 },
-  renameBtn: { padding:"6px 12px", borderRadius:6, border:"none", background:"#fbbf24", cursor:"pointer" },
-  deleteBtn: { padding:"6px 12px", borderRadius:6, border:"none", background:"#ef4444", color:"#fff", cursor:"pointer" },
+  renameBtn: { padding:"6px 12px", borderRadius:6, border:"none", background: theme.secondary, cursor:"pointer", transition:"all 0.2s" },
+  deleteBtn: { padding:"6px 12px", borderRadius:6, border:"none", background: theme.danger, color:"#fff", cursor:"pointer", transition:"all 0.2s" },
   invite: { display:"flex", gap:8, marginBottom:20 },
-  input: { padding:"8px 12px", borderRadius:6, border:"1px solid #ccc", flex:1, fontSize:16 },
-  primaryBtn: { padding:"8px 12px", borderRadius:6, border:"none", background:"#2563eb", color:"#fff", cursor:"pointer" },
+  input: { padding:"8px 12px", borderRadius:6, border:`1px solid ${theme.inputBorder}`, flex:1, fontSize:16 },
+  primaryBtn: { padding:"8px 12px", borderRadius:6, border:"none", background: theme.primary, color:"#fff", cursor:"pointer", transition:"all 0.2s" },
   columns: { display:"flex", gap:12, overflowX:"auto", marginBottom:20 },
-  column: { background:"#fff", padding:12, width:250, borderRadius:8, flexShrink:0, boxShadow:"0 4px 10px rgba(0,0,0,0.05)" },
-  addTaskBtn: { marginTop:6, padding:"6px", borderRadius:6, border:"none", background:"#2563eb", color:"#fff", cursor:"pointer" },
-  task: { background:"#e3f2fd", padding:8, borderRadius:6, marginBottom:6, cursor:"grab" },
-  activity: { marginBottom:20, background:"#fff", padding:12, borderRadius:8, boxShadow:"0 4px 10px rgba(0,0,0,0.05)" },
-  chat: { background:"#fff", padding:12, borderRadius:8, display:"flex", flexDirection:"column", gap:5, boxShadow:"0 4px 10px rgba(0,0,0,0.05)" },
+  column: { background: theme.cardBg, padding:12, width:250, borderRadius:8, flexShrink:0, boxShadow: theme.shadow, transition:"all 0.2s" },
+  addTaskBtn: { marginTop:6, padding:"6px", borderRadius:6, border:"none", background: theme.primary, color:"#fff", cursor:"pointer", transition:"all 0.2s" },
+  task: { background: theme.taskBg, padding:8, borderRadius:6, marginBottom:6, cursor:"grab", transition:"all 0.2s" },
+  activity: { marginBottom:20, background: theme.cardBg, padding:12, borderRadius:8, boxShadow: theme.shadow },
+  chat: { background: theme.cardBg, padding:12, borderRadius:8, display:"flex", flexDirection:"column", gap:5, boxShadow: theme.shadow },
   messages: { maxHeight:200, overflowY:"auto", display:"flex", flexDirection:"column", gap:4 },
   chatInput: { display:"flex", gap:6, marginTop:6 }
 }
