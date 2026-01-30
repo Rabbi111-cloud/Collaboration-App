@@ -33,13 +33,13 @@ export default function Dashboard() {
     return () => unsub()
   }, [])
 
-  // 📡 Realtime boards listener
+  // 📡 Realtime boards listener (OWNER + MEMBER)
   useEffect(() => {
     if (!user) return
 
     const q = query(
       collection(db, "boards"),
-      where("owner", "==", user.uid)
+      where("members", "array-contains", user.uid)
     )
 
     const unsub = onSnapshot(q, (snap) => {
@@ -53,7 +53,7 @@ export default function Dashboard() {
     return () => unsub()
   }, [user])
 
-  // ➕ Create board (UPDATED)
+  // ➕ Create board (FIXED: includes members)
   const createBoard = async () => {
     if (!user) {
       alert("You are not authenticated")
@@ -69,6 +69,7 @@ export default function Dashboard() {
       await addDoc(collection(db, "boards"), {
         title: title.trim(),
         owner: user.uid,
+        members: [user.uid], // ✅ REQUIRED
         createdAt: serverTimestamp()
       })
 
