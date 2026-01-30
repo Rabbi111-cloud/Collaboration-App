@@ -71,40 +71,43 @@ const styles = {
     display: "flex",
     justifyContent: "center",
     alignItems: "center",
-    background: "#f0f4f8",
+    background: theme.pageBg,
     fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif"
   },
   card: {
-    background: "#fff",
+    background: theme.cardBg,
     padding: 30,
     borderRadius: 12,
-    boxShadow: "0 8px 20px rgba(0,0,0,0.1)",
+    boxShadow: theme.shadow,
     display: "flex",
     flexDirection: "column",
     gap: 12,
-    minWidth: 300
+    minWidth: 300,
+    transition: "all 0.2s"
   },
-  heading: { textAlign: "center", marginBottom: 20 },
+  heading: { textAlign: "center", marginBottom: 20, color: theme.textPrimary },
   input: {
     padding: "10px 14px",
     borderRadius: 6,
-    border: "1px solid #ccc",
+    border: `1px solid ${theme.inputBorder}`,
     fontSize: 16
   },
   button: {
     padding: "12px",
     borderRadius: 6,
     border: "none",
-    background: "#2563eb",
+    background: theme.primary,
     color: "#fff",
     cursor: "pointer",
     fontWeight: 600,
-    marginTop: 10
+    marginTop: 10,
+    transition: "all 0.2s"
   },
+  buttonHover: { filter: "brightness(0.9)" },
   switchText: {
     cursor: "pointer",
     textAlign: "center",
-    color: "#555",
+    color: theme.textSecondary,
     fontSize: 14,
     marginTop: 10
   }
