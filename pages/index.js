@@ -5,8 +5,8 @@ export default function Home() {
 
   return (
     <div style={styles.page}>
-      <h1>Task Collab</h1>
-      <p>Organize work. Collaborate. Chat.</p>
+      <h1 style={styles.title}>Task Collab</h1>
+      <p style={styles.subtitle}>Organize work. Collaborate. Chat.</p>
 
       <div style={styles.buttons}>
         <button onClick={() => router.push("/login")} style={styles.primary}>
@@ -27,19 +27,28 @@ const styles = {
     flexDirection: "column",
     justifyContent: "center",
     alignItems: "center",
-    gap: 20
+    background: "#f0f4f8",
+    gap: 20,
+    fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif"
   },
-  buttons: {
-    display: "flex",
-    gap: 12
-  },
+  title: { fontSize: 42, fontWeight: 700 },
+  subtitle: { fontSize: 18, color: "#555" },
+  buttons: { display: "flex", gap: 16 },
   primary: {
     background: "#2563eb",
     color: "#fff",
-    padding: "12px 20px"
+    padding: "12px 28px",
+    border: "none",
+    borderRadius: 6,
+    cursor: "pointer",
+    fontWeight: 600
   },
   secondary: {
     background: "#e5e7eb",
-    padding: "12px 20px"
+    padding: "12px 28px",
+    border: "none",
+    borderRadius: 6,
+    cursor: "pointer",
+    fontWeight: 600
   }
 }
