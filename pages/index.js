@@ -1,5 +1,4 @@
 import { useRouter } from "next/router"
-import "../styles/global.css"
 
 export default function Home() {
   const router = useRouter()
