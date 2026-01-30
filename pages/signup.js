@@ -2,6 +2,7 @@ import { useState } from "react"
 import { useRouter } from "next/router"
 import { createUserWithEmailAndPassword } from "firebase/auth"
 import { auth } from "../lib/firebase"
+import { theme } from "../lib/theme"
 
 export default function Signup() {
   const [email, setEmail] = useState("")
