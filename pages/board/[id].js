@@ -1,158 +1,170 @@
-import { useRouter } from "next/router"
 import { useEffect, useState } from "react"
+import { useRouter } from "next/router"
+import { onAuthStateChanged } from "firebase/auth"
 import {
-  collection,
   doc,
+  getDoc,
+  updateDoc,
+  collection,
   addDoc,
   onSnapshot,
+  serverTimestamp,
+  deleteDoc,
   query,
-  orderBy,
-  updateDoc,
-  deleteDoc
+  orderBy
 } from "firebase/firestore"
 import { auth, db } from "../../lib/firebase"
-import { onAuthStateChanged } from "firebase/auth"
 
 export default function BoardPage() {
   const router = useRouter()
   const { id } = router.query
 
   const [user, setUser] = useState(null)
+  const [board, setBoard] = useState(null)
   const [columns, setColumns] = useState([])
+  const [activity, setActivity] = useState([])
+  const [inviteEmail, setInviteEmail] = useState("")
   const [newColumn, setNewColumn] = useState("")
-  const [dragTask, setDragTask] = useState(null)
 
-  // 🔐 Auth guard
+  // 🔐 Auth
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, u => {
+    return onAuthStateChanged(auth, u => {
       if (!u) router.push("/login")
       else setUser(u)
     })
-    return () => unsub()
   }, [])
 
-  // 📡 Load columns
+  // 📡 Board
+  useEffect(() => {
+    if (!id) return
+
+    return onSnapshot(doc(db, "boards", id), snap => {
+      if (!snap.exists()) return router.push("/dashboard")
+      setBoard({ id: snap.id, ...snap.data() })
+    })
+  }, [id])
+
+  // 📦 Columns
+  useEffect(() => {
+    if (!id) return
+
+    return onSnapshot(collection(db, "boards", id, "columns"), snap => {
+      setColumns(snap.docs.map(d => ({ id: d.id, ...d.data() })))
+    })
+  }, [id])
+
+  // 📜 Activity
   useEffect(() => {
     if (!id) return
 
     const q = query(
-      collection(db, "boards", id, "columns"),
-      orderBy("order")
+      collection(db, "boards", id, "activity"),
+      orderBy("createdAt", "desc")
     )
 
-    const unsub = onSnapshot(q, snap => {
-      const cols = snap.docs.map(d => ({
-        id: d.id,
-        ...d.data(),
-        tasks: []
-      }))
-      setColumns(cols)
+    return onSnapshot(q, snap => {
+      setActivity(snap.docs.map(d => d.data()))
     })
-
-    return () => unsub()
   }, [id])
 
-  // 📡 Load tasks per column
-  useEffect(() => {
-    if (!id || columns.length === 0) return
+  // 🧾 Activity logger
+  const log = async (text) => {
+    await addDoc(collection(db, "boards", id, "activity"), {
+      text,
+      createdAt: serverTimestamp()
+    })
+  }
 
-    const unsubs = columns.map(col =>
-      onSnapshot(
-        query(
-          collection(db, "boards", id, "columns", col.id, "tasks"),
-          orderBy("order")
-        ),
-        snap => {
-          setColumns(prev =>
-            prev.map(c =>
-              c.id === col.id
-                ? { ...c, tasks: snap.docs.map(t => ({ id: t.id, ...t.data() })) }
-                : c
-            )
-          )
-        }
-      )
-    )
-
-    return () => unsubs.forEach(u => u())
-  }, [id, columns.length])
-
-  // ➕ Add column
+  // ➕ Column
   const addColumn = async () => {
     if (!newColumn.trim()) return
-
     await addDoc(collection(db, "boards", id, "columns"), {
       title: newColumn,
-      order: columns.length
+      createdAt: serverTimestamp()
     })
-
+    await log(`${user.email} added a column`)
     setNewColumn("")
   }
 
-  // ➕ Add task
+  // ➕ Task
   const addTask = async (columnId) => {
-    const title = prompt("Task title")
-    if (!title) return
+    const text = prompt("Task title")
+    if (!text) return
 
     await addDoc(
       collection(db, "boards", id, "columns", columnId, "tasks"),
       {
-        title,
-        order: Date.now()
+        text,
+        createdAt: serverTimestamp()
       }
     )
+    await log(`${user.email} added a task`)
   }
 
-  // 🧲 Drag logic (SAFE)
-  const onDrop = async (columnId) => {
-    if (!dragTask) return
+  // 👥 Invite collaborator
+  const invite = async () => {
+    if (!inviteEmail) return alert("Enter email")
 
-    await updateDoc(
-      doc(db, "boards", id, "columns", dragTask.columnId, "tasks", dragTask.id),
-      { columnId }
-    )
+    const snap = await getDoc(doc(db, "users", inviteEmail))
+    if (!snap.exists()) return alert("User not found")
 
-    setDragTask(null)
+    await updateDoc(doc(db, "boards", id), {
+      members: [...new Set([...board.members, snap.data().uid])]
+    })
+
+    await log(`${inviteEmail} was invited`)
+    setInviteEmail("")
   }
+
+  // ✏️ Rename board
+  const rename = async () => {
+    const name = prompt("New board name", board.title)
+    if (!name) return
+    await updateDoc(doc(db, "boards", id), { title: name })
+    await log(`${user.email} renamed the board`)
+  }
+
+  // ❌ Delete board
+  const remove = async () => {
+    if (!confirm("Delete this board?")) return
+    await deleteDoc(doc(db, "boards", id))
+    router.push("/dashboard")
+  }
+
+  if (!board) return <p>Loading…</p>
 
   return (
     <div style={styles.page}>
+      {/* Header */}
       <div style={styles.header}>
-        <button onClick={() => router.push("/dashboard")}>⬅ Back</button>
-        <h2>Board</h2>
+        <h2>{board.title}</h2>
+        <div>
+          <button onClick={rename}>Rename</button>
+          <button onClick={remove}>Delete</button>
+        </div>
       </div>
 
+      {/* Invite */}
+      <div style={styles.invite}>
+        <input
+          placeholder="Invite by email"
+          value={inviteEmail}
+          onChange={e => setInviteEmail(e.target.value)}
+        />
+        <button onClick={invite}>Invite</button>
+      </div>
+
+      {/* Columns */}
       <div style={styles.columns}>
         {columns.map(col => (
-          <div
-            key={col.id}
-            style={styles.column}
-            onDragOver={e => e.preventDefault()}
-            onDrop={() => onDrop(col.id)}
-          >
+          <div key={col.id} style={styles.column}>
             <h4>{col.title}</h4>
-
-            {col.tasks.map(task => (
-              <div
-                key={task.id}
-                style={styles.task}
-                draggable
-                onDragStart={() =>
-                  setDragTask({ ...task, columnId: col.id })
-                }
-              >
-                {task.title}
-              </div>
-            ))}
-
-            <button style={styles.addTask} onClick={() => addTask(col.id)}>
-              + Add Task
-            </button>
+            <Tasks boardId={id} columnId={col.id} />
+            <button onClick={() => addTask(col.id)}>+ Task</button>
           </div>
         ))}
 
-        {/* Add column */}
-        <div style={styles.addColumn}>
+        <div style={styles.column}>
           <input
             placeholder="New column"
             value={newColumn}
@@ -161,54 +173,56 @@ export default function BoardPage() {
           <button onClick={addColumn}>Add</button>
         </div>
       </div>
+
+      {/* Activity */}
+      <div style={styles.activity}>
+        <h4>Activity</h4>
+        {activity.map((a, i) => (
+          <p key={i}>• {a.text}</p>
+        ))}
+      </div>
     </div>
   )
 }
 
+/* 🔹 Tasks component */
+function Tasks({ boardId, columnId }) {
+  const [tasks, setTasks] = useState([])
+
+  useEffect(() => {
+    return onSnapshot(
+      collection(db, "boards", boardId, "columns", columnId, "tasks"),
+      snap => setTasks(snap.docs.map(d => d.data()))
+    )
+  }, [])
+
+  return tasks.map((t, i) => (
+    <div key={i} style={styles.task}>{t.text}</div>
+  ))
+}
+
+/* 🎨 UI */
 const styles = {
-  page: {
-    padding: "15px",
-    minHeight: "100vh",
-    background: "#eceff1"
-  },
-  header: {
-    display: "flex",
-    alignItems: "center",
-    gap: "10px",
-    marginBottom: "15px"
-  },
-  columns: {
-    display: "flex",
-    gap: "15px",
-    overflowX: "auto"
-  },
+  page: { padding: 20, background: "#eceff1", minHeight: "100vh" },
+  header: { display: "flex", justifyContent: "space-between" },
+  invite: { margin: "10px 0" },
+  columns: { display: "flex", gap: 12, overflowX: "auto" },
   column: {
-    minWidth: "250px",
     background: "#fff",
-    padding: "10px",
-    borderRadius: "10px"
+    padding: 12,
+    width: 250,
+    borderRadius: 8
   },
   task: {
     background: "#e3f2fd",
-    padding: "8px",
-    borderRadius: "6px",
-    marginBottom: "6px",
-    cursor: "grab"
+    padding: 8,
+    borderRadius: 6,
+    marginBottom: 6
   },
-  addTask: {
-    marginTop: "5px",
-    background: "transparent",
-    border: "none",
-    color: "#0070f3",
-    cursor: "pointer"
-  },
-  addColumn: {
-    minWidth: "200px",
+  activity: {
+    marginTop: 20,
     background: "#fff",
-    padding: "10px",
-    borderRadius: "10px",
-    display: "flex",
-    flexDirection: "column",
-    gap: "5px"
+    padding: 12,
+    borderRadius: 8
   }
 }
