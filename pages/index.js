@@ -1,19 +1,19 @@
-"use client"
-import { useRouter } from "next/navigation"
+import { useRouter } from "next/router"
+import "../styles/global.css"
 
 export default function Home() {
   const router = useRouter()
 
   return (
-    <div style={styles.container}>
-      <h1 style={styles.title}>Task Collaboration App</h1>
-      <p style={styles.subtitle}>Organize tasks. Collaborate in real time.</p>
+    <div style={styles.page}>
+      <h1>Task Collab</h1>
+      <p>Organize work. Collaborate. Chat.</p>
 
       <div style={styles.buttons}>
-        <button onClick={() => router.push("/login")} style={styles.login}>
+        <button onClick={() => router.push("/login")} style={styles.primary}>
           Login
         </button>
-        <button onClick={() => router.push("/signup")} style={styles.signup}>
+        <button onClick={() => router.push("/signup")} style={styles.secondary}>
           Sign Up
         </button>
       </div>
@@ -22,29 +22,25 @@ export default function Home() {
 }
 
 const styles = {
-  container: {
+  page: {
     minHeight: "100vh",
     display: "flex",
     flexDirection: "column",
     justifyContent: "center",
     alignItems: "center",
-    background: "#f4f4f4"
+    gap: 20
   },
-  title: { fontSize: "32px", marginBottom: "10px" },
-  subtitle: { marginBottom: "30px", color: "#555" },
-  buttons: { display: "flex", gap: "15px" },
-  login: {
-    padding: "12px 20px",
-    background: "#25D366",
-    color: "#fff",
-    border: "none",
-    borderRadius: "6px"
+  buttons: {
+    display: "flex",
+    gap: 12
   },
-  signup: {
-    padding: "12px 20px",
-    background: "#0070f3",
+  primary: {
+    background: "#2563eb",
     color: "#fff",
-    border: "none",
-    borderRadius: "6px"
+    padding: "12px 20px"
+  },
+  secondary: {
+    background: "#e5e7eb",
+    padding: "12px 20px"
   }
 }
